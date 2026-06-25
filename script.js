@@ -40,6 +40,17 @@ const defaultTracks = [
     }
 ];
 
+const defaultStations = [
+    { id: 'station-dice', name: 'Dice Radio (diceradio.gr)', url: '' },
+    { id: 'station-radioq37', name: 'Radio Q37 (radioq37.com)', url: '' },
+    { id: 'station-ozora', name: 'Ozora Radio', url: '' }
+];
+
+// Record labels
+if (!state.labels) state.labels = [];
+
+if (!state.stations) state.stations = [];
+
 const sections = document.querySelectorAll('.page-section');
 const navButtons = document.querySelectorAll('.nav-button');
 const quickLinks = document.querySelectorAll('.link-card');
@@ -57,6 +68,8 @@ function loadState() {
                 ...track,
                 url: track.source && track.type === 'remote' ? track.source : track.url || track.source
             }));
+            state.stations = parsed.stations || [];
+            state.labels = parsed.labels || [];
         } catch (error) {
             console.warn('Kunne ikke laste state:', error);
         }
@@ -64,6 +77,7 @@ function loadState() {
     if (!state.tracks.length) {
         state.tracks = [...defaultTracks];
     }
+    if (!state.stations.length) state.stations = [...defaultStations];
 }
 
 function saveState() {
@@ -78,6 +92,8 @@ function saveState() {
             source: track.source,
             type: track.type
         }))
+        ,stations: state.stations,
+        labels: state.labels
     };
     localStorage.setItem(LS_KEY, JSON.stringify(stateToSave));
 }
@@ -121,6 +137,70 @@ function renderTrackList() {
         item.appendChild(buttonGroup);
         trackListElement.appendChild(item);
     });
+}
+
+function renderStations() {
+    const select = document.getElementById('stationSelect');
+    select.innerHTML = '';
+    state.stations.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        select.appendChild(opt);
+    });
+}
+
+function playSelectedStation() {
+    const sel = document.getElementById('stationSelect').value;
+    const station = state.stations.find(s => s.id === sel);
+    if (!station) return alert('Velg en stasjon.');
+    if (!station.url) return alert('Ingen stream-URL er satt for denne stasjonen. Klikk Rediger og legg inn stream-URL.');
+    audioPlayer.src = station.url;
+    audioPlayer.play().catch(err => alert('Kunne ikke starte stasjonen: ' + err.message));
+}
+
+function stopStation() {
+    audioPlayer.pause();
+    audioPlayer.src = '';
+}
+
+function addStationFromForm() {
+    const name = document.getElementById('stationName').value.trim();
+    const url = document.getElementById('stationUrl').value.trim();
+    if (!name || !url) return alert('Fyll inn både navn og stream-URL.');
+    const id = `station-${Date.now()}`;
+    state.stations.push({ id, name, url });
+    saveState();
+    renderStations();
+    document.getElementById('stationName').value = '';
+    document.getElementById('stationUrl').value = '';
+}
+
+function renderLabels() {
+    const el = document.getElementById('labelsList');
+    el.innerHTML = '';
+    if (!state.labels.length) {
+        el.innerHTML = '<p>Ingen plateselskaper lagt til.</p>';
+        return;
+    }
+    state.labels.forEach((lab, idx) => {
+        const item = document.createElement('div');
+        item.className = 'track-item';
+        item.innerHTML = `<strong>${lab.name}</strong> ${lab.url ? `<a href="${lab.url}" target="_blank">nett</a>` : ''} <button data-idx="${idx}">Fjern</button>`;
+        item.querySelector('button').addEventListener('click', () => { state.labels.splice(idx,1); saveState(); renderLabels(); });
+        el.appendChild(item);
+    });
+}
+
+function addLabelFromForm() {
+    const name = document.getElementById('labelName').value.trim();
+    const url = document.getElementById('labelUrl').value.trim();
+    if (!name) return alert('Navn på plateselskap kreves.');
+    state.labels.push({ name, url });
+    saveState();
+    renderLabels();
+    document.getElementById('labelName').value = '';
+    document.getElementById('labelUrl').value = '';
 }
 
 function playTrack(trackId) {
@@ -261,10 +341,77 @@ function updateLiveStatus() {
 }
 
 function renderDjPreview() {
-    profileBanner.style.backgroundImage = state.djProfile.bgUrl ? `url('${state.djProfile.bgUrl}')` : 'linear-gradient(160deg, rgba(111,157,255,0.35), rgba(255,255,255,0.04))';
+    // Banner background (image or color)
+    if (state.djProfile.bannerVideoUrl) {
+        const bannerVideo = document.getElementById('bannerVideo');
+        bannerVideo.src = state.djProfile.bannerVideoUrl;
+        bannerVideo.classList.remove('hidden');
+        profileBanner.style.backgroundImage = '';
+    } else {
+        const bannerVideo = document.getElementById('bannerVideo');
+        bannerVideo.classList.add('hidden');
+        profileBanner.style.backgroundImage = state.djProfile.bgUrl ? `url('${state.djProfile.bgUrl}')` : 'linear-gradient(160deg, rgba(111,157,255,0.35), rgba(255,255,255,0.04))';
+    }
+    // Avatar
+    const avatarEl = document.getElementById('profileAvatar');
+    if (state.djProfile.avatarUrl) {
+        avatarEl.style.backgroundImage = `url('${state.djProfile.avatarUrl}')`;
+    } else {
+        avatarEl.style.backgroundImage = '';
+    }
+    // Text
     profileName.textContent = state.djProfile.name || 'Ingen';
     profileBio.textContent = state.djProfile.about || 'Lag din DJ-profil for å vise om deg selv.';
     profileShowName.textContent = state.djProfile.showName || 'Ingen program';
+    // Brightness and accent
+    profileBanner.style.filter = `brightness(${state.djProfile.bannerBrightness || 0.9})`;
+    // accent color usage could be applied to elements
+}
+
+function handleDjMediaInputs() {
+    const profileInput = document.getElementById('djProfileImage');
+    const bannerInput = document.getElementById('djBannerImage');
+    const bannerVideoInput = document.getElementById('djBannerVideo');
+    const brightness = document.getElementById('bannerBrightness');
+    const accent = document.getElementById('bannerAccent');
+
+    profileInput.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        state.djProfile.avatarUrl = url;
+        saveState();
+        renderDjPreview();
+    });
+
+    bannerInput.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        state.djProfile.bgUrl = url;
+        saveState();
+        renderDjPreview();
+    });
+
+    bannerVideoInput.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        state.djProfile.bannerVideoUrl = url;
+        saveState();
+        renderDjPreview();
+    });
+
+    brightness.addEventListener('input', e => {
+        state.djProfile.bannerBrightness = e.target.value;
+        saveState();
+        renderDjPreview();
+    });
+
+    accent.addEventListener('input', e => {
+        state.djProfile.accent = e.target.value;
+        saveState();
+    });
 }
 
 function saveDjProfile(name, about, showName, bgUrl) {
@@ -362,6 +509,20 @@ function setupEventListeners() {
         const random = Math.floor(Math.random() * state.tracks.length);
         playTrack(state.tracks[random].id);
     });
+
+    // station controls
+    if (document.getElementById('stationSelect')) {
+        renderStations();
+        document.getElementById('playStationBtn').addEventListener('click', playSelectedStation);
+        document.getElementById('stopStationBtn').addEventListener('click', stopStation);
+        document.getElementById('addStationBtn').addEventListener('click', addStationFromForm);
+    }
+
+    // labels
+    if (document.getElementById('addLabelBtn')) {
+        renderLabels();
+        document.getElementById('addLabelBtn').addEventListener('click', addLabelFromForm);
+    }
 }
 
 function init() {

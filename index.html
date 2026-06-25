@@ -23,6 +23,7 @@
                 <button data-target="calendar" class="nav-button">Kalender</button>
                 <button data-target="dj" class="nav-button">DJ</button>
                 <button data-target="users" class="nav-button">Brukere</button>
+                <button data-target="maps" class="nav-button">Maps</button>
             </nav>
         </header>
 
@@ -39,6 +40,29 @@
                 </div>
             </section>
 
+            <section id="maps" class="page-section">
+                <div class="panel">
+                    <h2>Maps (valgfri)</h2>
+                    <p>Søk etter steder på jorda. Legg inn Google Maps API-nøkkel for full funksjonalitet, ellers brukes OpenStreetMap som fallback.</p>
+                    <div class="map-controls">
+                        <label>Google API-nøkkel (valgfri)
+                            <input type="text" id="googleApiKey" placeholder="Gå til Google Cloud for API-nøkkel">
+                        </label>
+                        <label>Søk sted
+                            <input type="text" id="mapSearch" placeholder="Stedsnavn eller adresse">
+                        </label>
+                        <div class="map-buttons">
+                            <button id="mapSearchBtn" class="btn-primary">Søk</button>
+                            <button id="mapClearBtn" class="btn-secondary">Tøm</button>
+                        </div>
+                    </div>
+                    <div id="mapContainer" class="map-container">
+                        <p class="muted">Kart vil vises her (Google Maps hvis API-nøkkel oppgitt, ellers OpenStreetMap).</p>
+                    </div>
+                    <p><button id="closeMaps" class="btn-secondary">Lukk Maps</button></p>
+                </div>
+            </section>
+
             <section id="radio" class="page-section">
                 <div class="panel">
                     <h2>Live Radio</h2>
@@ -50,6 +74,38 @@
                             <div class="audio-controls">
                                 <button id="playNext">Neste sang</button>
                                 <button id="playRandom">Spill tilfeldig</button>
+                            </div>
+                            <div class="station-controls">
+                                <label>Velg radiostasjon
+                                    <select id="stationSelect"></select>
+                                </label>
+                                <div class="station-actions">
+                                    <button id="playStationBtn" class="btn-primary">Spill stasjon</button>
+                                    <button id="stopStationBtn" class="btn-secondary">Stopp</button>
+                                </div>
+                                <details class="add-station">
+                                    <summary>Legg til stasjon</summary>
+                                    <label>Navn
+                                        <input type="text" id="stationName" placeholder="Stasjonsnavn">
+                                    </label>
+                                    <label>Stream URL
+                                        <input type="url" id="stationUrl" placeholder="https://...mp3 eller .aac">
+                                    </label>
+                                    <button id="addStationBtn" class="btn-primary">Legg til</button>
+                                </details>
+                            </div>
+                            <div class="labels-section">
+                                <h4>Plate­selskaper</h4>
+                                <div id="labelsList" class="track-list"></div>
+                                <div class="add-label">
+                                    <label>Navn
+                                        <input type="text" id="labelName" placeholder="Plate­selskap navn">
+                                    </label>
+                                    <label>Nettside (valgfri)
+                                        <input type="url" id="labelUrl" placeholder="https://...">
+                                    </label>
+                                    <button id="addLabelBtn" class="btn-primary">Legg til plateselskap</button>
+                                </div>
                             </div>
                         </div>
                         <div class="radio-card">
@@ -96,6 +152,21 @@
                 <div class="panel">
                     <h2>Kalender</h2>
                     <p>Se hvilke sanger som skal spilles på spesifikke dager.</p>
+                    <div class="calendar-controls">
+                        <label>Vis dato i lokal format
+                            <select id="localeSelect"></select>
+                        </label>
+                        <label>Kalendersystem
+                            <select id="calendarSelect">
+                                <option value="gregory">Gregorian</option>
+                                <option value="islamic">Islamic</option>
+                                <option value="hebrew">Hebrew</option>
+                                <option value="buddhist">Buddhist</option>
+                                <option value="chinese">Chinese</option>
+                                <option value="persian">Persian</option>
+                            </select>
+                        </label>
+                    </div>
                     <div class="calendar-grid">
                         <div class="calendar-card">
                             <label>Velg dato
@@ -128,14 +199,35 @@
                                 <label>Bakgrunnsbildets URL
                                     <input type="url" id="djBgUrl" placeholder="https://...">
                                 </label>
-                                <button type="submit" class="btn-primary">Lagre DJ-profil</button>
+                                <label>Profilbilde (valgfritt)
+                                    <input type="file" id="djProfileImage" accept="image/*">
+                                </label>
+                                <label>Bannerbilde (valgfritt)
+                                    <input type="file" id="djBannerImage" accept="image/*">
+                                </label>
+                                <label>Bannervideo (valgfritt)
+                                    <input type="file" id="djBannerVideo" accept="video/*">
+                                </label>
+                                <label>Lysstyrke banner
+                                    <input type="range" id="bannerBrightness" min="0.2" max="1.2" step="0.01" value="0.9">
+                                </label>
+                                <label>Aksentfarge
+                                    <input type="color" id="bannerAccent" value="#6f9dff">
+                                </label>
+                                <div>
+                                    <button type="submit" class="btn-primary">Lagre DJ-profil</button>
+                                    <button type="button" id="resetProfile" class="btn-secondary">Tilbakestill</button>
+                                </div>
                             </form>
                         </div>
                         <div class="dj-card" id="djProfilePreview">
                             <h3>Forhåndsvisning</h3>
                             <div class="profile-card">
-                                <div class="profile-banner" id="profileBanner"></div>
+                                <div class="profile-banner" id="profileBanner">
+                                    <video id="bannerVideo" class="banner-video hidden" autoplay muted loop playsinline></video>
+                                </div>
                                 <div class="profile-info">
+                                    <div class="profile-avatar" id="profileAvatar"></div>
                                     <h4 id="profileShowName">Ingen program</h4>
                                     <p id="profileBio">Lag din DJ-profil for å vise om deg selv.</p>
                                     <p><strong>DJ-navn:</strong> <span id="profileName">Ingen</span></p>
