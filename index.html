@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Min Hjemmeside</title>
+    <title>Art Music Radio</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,15 +13,183 @@
         <div class="background-image"></div>
     </div>
 
-    <div class="container">
-        <h1>Velkommen</h1>
-        <p>Dra knappen rundt på siden</p>
-        
-        <div class="draggable-button" id="dragButton">
-            <div class="button-inner">
-                <span>Dra meg!</span>
-            </div>
-        </div>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="brand">Art Music Radio</div>
+            <nav class="main-nav">
+                <button data-target="home" class="nav-button active">Hjem</button>
+                <button data-target="radio" class="nav-button">Radio</button>
+                <button data-target="schedule" class="nav-button">Planlegger</button>
+                <button data-target="calendar" class="nav-button">Kalender</button>
+                <button data-target="dj" class="nav-button">DJ</button>
+                <button data-target="users" class="nav-button">Brukere</button>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <section id="home" class="page-section active">
+                <div class="panel">
+                    <h1>Velkommen til din radiokanal</h1>
+                    <p>Dette er startpunktet for live web-radio, planlegging av sanger og DJ-profiler. Her kan du lage brukere, planlegge show og laste opp låter.</p>
+                    <div class="quick-links">
+                        <a class="link-card" data-target="radio">Gå til Radio</a>
+                        <a class="link-card" data-target="schedule">Lag tidsplan</a>
+                        <a class="link-card" data-target="users">Lag bruker</a>
+                    </div>
+                </div>
+            </section>
+
+            <section id="radio" class="page-section">
+                <div class="panel">
+                    <h2>Live Radio</h2>
+                    <p>Spill av sangene dine og vis live DJ-status.</p>
+                    <div class="radio-grid">
+                        <div class="radio-card">
+                            <div class="radio-status" id="liveStatus">Live status: <span>Ingen live DJ</span></div>
+                            <audio id="radioPlayer" controls preload="none"></audio>
+                            <div class="audio-controls">
+                                <button id="playNext">Neste sang</button>
+                                <button id="playRandom">Spill tilfeldig</button>
+                            </div>
+                        </div>
+                        <div class="radio-card">
+                            <h3>Track bibliotek</h3>
+                            <div class="upload-group">
+                                <label for="trackFile">Last opp lokal sang</label>
+                                <input type="file" accept="audio/*" id="trackFile">
+                            </div>
+                            <div class="upload-group">
+                                <label for="trackUrl">Eller legg inn URL</label>
+                                <input type="url" id="trackUrl" placeholder="https://...mp3">
+                                <button id="addUrlTrack">Legg til URL</button>
+                            </div>
+                            <div id="trackList" class="track-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="schedule" class="page-section">
+                <div class="panel">
+                    <h2>Planlegger</h2>
+                    <p>Velg når sangene skal spilles og lag programmer for hver dag.</p>
+                    <form id="scheduleForm" class="form-grid">
+                        <label>Velg sang
+                            <select id="scheduleTrack"></select>
+                        </label>
+                        <label>Dato
+                            <input type="date" id="scheduleDate">
+                        </label>
+                        <label>Starttid
+                            <input type="time" id="scheduleTime">
+                        </label>
+                        <label>Varighet (min)
+                            <input type="number" id="scheduleDuration" min="1" max="180" value="60">
+                        </label>
+                        <button type="submit" class="btn-primary">Legg til i plan</button>
+                    </form>
+                    <div id="scheduleList" class="calendar-list"></div>
+                </div>
+            </section>
+
+            <section id="calendar" class="page-section">
+                <div class="panel">
+                    <h2>Kalender</h2>
+                    <p>Se hvilke sanger som skal spilles på spesifikke dager.</p>
+                    <div class="calendar-grid">
+                        <div class="calendar-card">
+                            <label>Velg dato
+                                <input type="date" id="calendarDate">
+                            </label>
+                            <button id="showDaySchedule">Vis dag</button>
+                        </div>
+                        <div id="daySchedule" class="day-schedule"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="dj" class="page-section">
+                <div class="panel">
+                    <h2>DJ-profil</h2>
+                    <p>Som DJ får du egen side for bio, bakgrunn og radioprogram.</p>
+                    <div class="dj-grid">
+                        <div class="dj-card">
+                            <h3>Din DJ-side</h3>
+                            <form id="djProfileForm" class="form-grid">
+                                <label>DJ-navn
+                                    <input type="text" id="djName" placeholder="DJ Navn">
+                                </label>
+                                <label>Din bakgrunn
+                                    <textarea id="djBackground" rows="4" placeholder="Skriv om deg selv..."></textarea>
+                                </label>
+                                <label>Programnavn
+                                    <input type="text" id="djShowName" placeholder="Navn på programmet">
+                                </label>
+                                <label>Bakgrunnsbildets URL
+                                    <input type="url" id="djBgUrl" placeholder="https://...">
+                                </label>
+                                <button type="submit" class="btn-primary">Lagre DJ-profil</button>
+                            </form>
+                        </div>
+                        <div class="dj-card" id="djProfilePreview">
+                            <h3>Forhåndsvisning</h3>
+                            <div class="profile-card">
+                                <div class="profile-banner" id="profileBanner"></div>
+                                <div class="profile-info">
+                                    <h4 id="profileShowName">Ingen program</h4>
+                                    <p id="profileBio">Lag din DJ-profil for å vise om deg selv.</p>
+                                    <p><strong>DJ-navn:</strong> <span id="profileName">Ingen</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="users" class="page-section">
+                <div class="panel">
+                    <h2>Brukere og innlogging</h2>
+                    <p>Opprett kontoer og logg inn. DJs får ekstra funksjoner.</p>
+                    <div class="user-grid">
+                        <div class="user-card">
+                            <h3>Ny bruker</h3>
+                            <form id="signupForm" class="form-grid">
+                                <label>Brukernavn
+                                    <input type="text" id="signupUsername" placeholder="Brukernavn">
+                                </label>
+                                <label>Passord
+                                    <input type="password" id="signupPassword" placeholder="Passord">
+                                </label>
+                                <label>Rolle
+                                    <select id="signupRole">
+                                        <option value="listener">Lytter</option>
+                                        <option value="dj">DJ</option>
+                                    </select>
+                                </label>
+                                <button type="submit" class="btn-primary">Opprett bruker</button>
+                            </form>
+                        </div>
+                        <div class="user-card">
+                            <h3>Logg inn</h3>
+                            <form id="loginForm" class="form-grid">
+                                <label>Brukernavn
+                                    <input type="text" id="loginUsername" placeholder="Brukernavn">
+                                </label>
+                                <label>Passord
+                                    <input type="password" id="loginPassword" placeholder="Passord">
+                                </label>
+                                <button type="submit" class="btn-primary">Logg inn</button>
+                            </form>
+                        </div>
+                        <div class="user-card user-status">
+                            <h3>Innlogget</h3>
+                            <p id="currentUserStatus">Ingen bruker er logget inn.</p>
+                            <button id="logoutButton" class="btn-secondary hidden">Logg ut</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
     <script src="script.js"></script>
