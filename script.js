@@ -41,9 +41,8 @@ const defaultTracks = [
 ];
 
 const defaultStations = [
-    { id: 'station-dice', name: 'Dice Radio (diceradio.gr)', url: '' },
-    { id: 'station-radioq37', name: 'Radio Q37 (radioq37.com)', url: '' },
-    { id: 'station-ozora', name: 'Ozora Radio', url: '' }
+    { id: 'station-radioq37', name: 'Radio Q37', url: 'https://radioq37.com/player/' },
+    { id: 'station-dice', name: 'Dice Radio', url: 'https://diceradio.gr/' }
 ];
 
 // Record labels
@@ -155,8 +154,13 @@ function playSelectedStation() {
     const station = state.stations.find(s => s.id === sel);
     if (!station) return alert('Velg en stasjon.');
     if (!station.url) return alert('Ingen stream-URL er satt for denne stasjonen. Klikk Rediger og legg inn stream-URL.');
+    // Prøv å spille direkte; hvis det feiler (CORS eller format), åpne spillerlenken i ny fane
     audioPlayer.src = station.url;
-    audioPlayer.play().catch(err => alert('Kunne ikke starte stasjonen: ' + err.message));
+    audioPlayer.play().catch(err => {
+        console.warn('Direkte avspilling feilet, åpner ekstern spiller:', err);
+        // Åpne i ny fane som fallback
+        window.open(station.url, '_blank');
+    });
 }
 
 function stopStation() {
