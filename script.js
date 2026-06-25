@@ -12,7 +12,7 @@ const state = {
 };
 
 const LS_KEY = 'artMusicRadioState';
-const audioPlayer = document.getElementById('radioPlayer');
+let audioPlayer = null;
 const liveStatus = document.getElementById('liveStatus');
 const trackListElement = document.getElementById('trackList');
 const scheduleTrackSelect = document.getElementById('scheduleTrack');
@@ -41,9 +41,10 @@ const defaultTracks = [
 ];
 
 const defaultStations = [
-    { id: 'station-radioq37', name: 'Radio Q37', url: 'https://radioq37.com/player/' },
-    { id: 'station-dice', name: 'Dice Radio', url: 'https://diceradio.gr/' },
-    { id: 'station-difm', name: 'DI.fm Progressive Trance', url: 'https://listen.di.fm/progressive_trance', siteUrl: 'https://www.di.fm/' }
+    { id: 'station-radioq37', name: 'Radio Q37', url: 'https://radioq37.com/player/', genres: ['ambient','psybient','progressive','downtempo','experimental'] },
+    { id: 'station-dice', name: 'Dice Radio', url: 'https://diceradio.gr/', genres: ['psytrance','chillout'] },
+    { id: 'station-difm', name: 'DI.fm Progressive Trance', url: 'https://listen.di.fm/progressive_trance', siteUrl: 'https://www.di.fm/', genres: ['progressive','trance'] },
+    { id: 'station-zora', name: 'Radio Zora', url: 'https://2026.radiozora.fm/', genres: ['world','folk','eclectic'] }
 ];
 
 // Record labels
@@ -148,25 +149,110 @@ function renderStations() {
         opt.textContent = s.name;
         select.appendChild(opt);
     });
+    // after rendering stations, show schedule for the first/selected station
+    const selected = select.value || (select.options[0] && select.options[0].value);
+    if (selected) renderStationSchedule(selected);
+}
+
+function getMonthKey(year, month) {
+    // month: 1-12
+    const m = String(month).padStart(2, '0');
+    return `${year}-${m}`;
+}
+
+function renderStationSchedule(stationId, monthKey) {
+    const container = document.getElementById('stationScheduleList');
+    if (!container) return;
+    const station = state.stations.find(s => s.id === stationId);
+    if (!station) { container.innerHTML = '<p>Ingen stasjon valgt.</p>'; return; }
+    // default to current month
+    const now = new Date();
+    if (!monthKey) monthKey = getMonthKey(now.getFullYear(), now.getMonth() + 1);
+    document.getElementById('stationMonthSelect').value = monthKey;
+    // ensure station.monthlySchedule exists
+    if (!station.monthlySchedule) station.monthlySchedule = {};
+    const items = station.monthlySchedule[monthKey] || [];
+    if (!items.length) {
+        container.innerHTML = '<p>Ingen planlagte sendinger for denne måneden.</p>';
+        return;
+    }
+    // render list
+    container.innerHTML = '';
+    items.sort((a,b) => a.time.localeCompare(b.time));
+    items.forEach(it => {
+        const el = document.createElement('div');
+        el.className = 'schedule-item';
+        el.innerHTML = `<strong>${it.date} ${it.time}</strong> — <span>${it.title || it.show || 'Uten tittel'}</span>`;
+        container.appendChild(el);
+    });
 }
 
 function playSelectedStation() {
     const sel = document.getElementById('stationSelect').value;
     const station = state.stations.find(s => s.id === sel);
     if (!station) return alert('Velg en stasjon.');
-    if (!station.url) return alert('Ingen stream-URL er satt for denne stasjonen. Klikk Rediger og legg inn stream-URL.');
-    // Prøv å spille direkte; hvis det feiler (CORS eller format), åpne spillerlenken i ny fane
-    audioPlayer.src = station.url;
+    // prefer a raw stream URL if provided
+    const stream = station.streamUrl || station.url || station.siteUrl;
+    if (!stream) return alert('Ingen stream-URL er satt for denne stasjonen. Klikk Rediger og legg inn stream-URL.');
+    // stop any existing playback cleanly
+    try { stopStation(); } catch(e){}
+    audioPlayer.src = stream;
+    audioPlayer.load();
     audioPlayer.play().catch(err => {
         console.warn('Direkte avspilling feilet, åpner ekstern spiller:', err);
-        // Åpne i ny fane som fallback
-        window.open(station.url, '_blank');
+        const fallback = station.siteUrl || station.url;
+        if (fallback) window.open(fallback, '_blank');
     });
 }
 
 function stopStation() {
-    audioPlayer.pause();
-    audioPlayer.src = '';
+    try {
+        audioPlayer.pause();
+        audioPlayer.removeAttribute('src');
+        audioPlayer.load();
+    } catch(e) {
+        console.warn('Feil ved stopping av stasjon', e);
+    }
+}
+
+// Audio output device handling (setSinkId where supported)
+async function populateAudioOutputs() {
+    const sel = document.getElementById('outputSelect');
+    if (!sel) return;
+    sel.innerHTML = '';
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+        const opt = document.createElement('option'); opt.value = ''; opt.textContent = 'Ikke støtte for enhetsvalg'; sel.appendChild(opt); return;
+    }
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const outputs = devices.filter(d => d.kind === 'audiooutput');
+        if (!outputs.length) {
+            const opt = document.createElement('option'); opt.value = ''; opt.textContent = 'Ingen lydutganger funnet'; sel.appendChild(opt); return;
+        }
+        outputs.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.deviceId;
+            opt.textContent = d.label || `Output ${d.deviceId}`;
+            sel.appendChild(opt);
+        });
+        sel.addEventListener('change', () => setAudioOutput(sel.value));
+    } catch (e) {
+        const opt = document.createElement('option'); opt.value = ''; opt.textContent = 'Feil ved henting av enheter'; sel.appendChild(opt);
+    }
+}
+
+async function setAudioOutput(deviceId) {
+    if (!deviceId) return;
+    if (typeof audioPlayer.setSinkId === 'undefined') {
+        console.warn('setSinkId ikke støttet i denne nettleseren');
+        return;
+    }
+    try {
+        await audioPlayer.setSinkId(deviceId);
+        console.log('Lydutgang satt til', deviceId);
+    } catch (err) {
+        console.error('Kunne ikke sette lydutgang', err);
+    }
 }
 
 function addStationFromForm() {
@@ -521,6 +607,20 @@ function setupEventListeners() {
         document.getElementById('playStationBtn').addEventListener('click', playSelectedStation);
         document.getElementById('stopStationBtn').addEventListener('click', stopStation);
         document.getElementById('addStationBtn').addEventListener('click', addStationFromForm);
+        // when user changes station selection, update schedule view
+        document.getElementById('stationSelect').addEventListener('change', (e) => {
+            const id = e.target.value;
+            renderStationSchedule(id);
+        });
+        // month picker
+        const monthInput = document.getElementById('stationMonthSelect');
+        if (monthInput) {
+            monthInput.addEventListener('change', (e) => {
+                const mon = e.target.value; // format YYYY-MM
+                const sel = document.getElementById('stationSelect').value;
+                if (sel) renderStationSchedule(sel, mon);
+            });
+        }
     }
 
     // labels
@@ -531,6 +631,8 @@ function setupEventListeners() {
 }
 
 function init() {
+    // ensure audio element is bound after DOM is ready
+    audioPlayer = document.getElementById('radioPlayer');
     loadState();
     setupEventListeners();
     renderTrackList();
@@ -541,6 +643,8 @@ function init() {
     const today = new Date().toISOString().slice(0, 10);
     document.getElementById('scheduleDate').value = today;
     document.getElementById('calendarDate').value = today;
+    // populate audio outputs if available
+    try { populateAudioOutputs(); } catch(e) {}
 }
 
 init();

@@ -75,6 +75,8 @@
                                 <button id="playNext">Neste sang</button>
                                 <button id="playRandom">Spill tilfeldig</button>
                             </div>
+                               <label for="outputSelect">Lydutgang:</label>
+                               <select id="outputSelect"></select>
                             <div class="station-controls">
                                 <label>Velg radiostasjon
                                     <select id="stationSelect"></select>
@@ -82,6 +84,14 @@
                                 <div class="station-actions">
                                     <button id="playStationBtn" class="btn-primary">Spill stasjon</button>
                                     <button id="stopStationBtn" class="btn-secondary">Stopp</button>
+                                </div>
+                                <div id="stationScheduleContainer" class="station-schedule">
+                                    <label for="stationMonthSelect">Velg måned:</label>
+                                    <input type="month" id="stationMonthSelect" />
+                                    <div id="stationScheduleList" class="schedule-list">
+                                        <p>Velg en stasjon og måned for å vise månedsplanen.</p>
+                                    </div>
+                                </div>
                                 </div>
                                 <details class="add-station">
                                     <summary>Legg til stasjon</summary>
