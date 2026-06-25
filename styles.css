@@ -1,0 +1,234 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #000;
+}
+
+.background-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.background-image {
+    width: 120%;
+    height: 120%;
+    background-image: url('b9fd90dbe26964f73e8b99f65c736d27.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    animation: moveBackground 20s ease-in-out infinite;
+    filter: brightness(0.85);
+    image-rendering: high-quality;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+@keyframes moveBackground {
+    0% {
+        transform: scale(1) translate(0, 0);
+    }
+    25% {
+        transform: scale(1.05) translate(-3%, -3%);
+    }
+    50% {
+        transform: scale(1.1) translate(2%, 2%);
+    }
+    75% {
+        transform: scale(1.05) translate(-2%, 3%);
+    }
+    100% {
+        transform: scale(1) translate(0, 0);
+    }
+}
+
+.container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+h1 {
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    margin-bottom: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+p {
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    margin-bottom: 3rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+/* Draggable Button Styles */
+.draggable-button {
+    position: fixed;
+    width: clamp(100px, 15vmin, 160px);
+    height: clamp(100px, 15vmin, 160px);
+    cursor: grab;
+    z-index: 100;
+    user-select: none;
+    transition: box-shadow 0.3s ease;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.draggable-button:active {
+    cursor: grabbing;
+}
+
+.draggable-button:hover {
+    filter: brightness(1.1);
+}
+
+.button-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #74c69d 0%, #52b788 25%, #40916c 50%, #2d6a4f 75%, #1a472a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: clamp(0.75rem, 2vw, 1rem);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    position: relative;
+    -webkit-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.button-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+    pointer-events: none;
+}
+
+.draggable-button span {
+    position: relative;
+    z-index: 1;
+}
+
+/* High DPI / Retina Support */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .background-image {
+        background-size: cover;
+        background-position: center;
+    }
+
+    .button-inner {
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* iPhone og små mobiler */
+@media (max-width: 480px) {
+    .container {
+        padding: 1rem;
+    }
+
+    h1 {
+        margin-bottom: 0.75rem;
+    }
+
+    p {
+        margin-bottom: 2rem;
+    }
+
+    .draggable-button {
+        width: clamp(80px, 12vmin, 120px);
+        height: clamp(80px, 12vmin, 120px);
+    }
+}
+
+/* iPad og tablet */
+@media (min-width: 481px) and (max-width: 1024px) {
+    h1 {
+        margin-bottom: 1.5rem;
+    }
+
+    .draggable-button {
+        width: clamp(110px, 14vmin, 140px);
+        height: clamp(110px, 14vmin, 140px);
+    }
+}
+
+/* Desktop og Mac - Full oppløsning */
+@media (min-width: 1025px) {
+    .background-image {
+        width: 100%;
+        height: 100%;
+        background-attachment: fixed;
+    }
+
+    .container {
+        padding: 2rem;
+    }
+
+    .draggable-button {
+        width: 140px;
+        height: 140px;
+    }
+
+    .button-inner {
+        font-size: 0.95rem;
+    }
+}
+
+/* Landscape mode */
+@media (orientation: landscape) and (max-height: 500px) {
+    .container {
+        justify-content: flex-start;
+        padding-top: 2rem;
+    }
+
+    h1 {
+        margin-bottom: 0.5rem;
+    }
+
+    p {
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .draggable-button,
+    .container {
+        display: none;
+    }
+}
