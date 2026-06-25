@@ -42,7 +42,8 @@ const defaultTracks = [
 
 const defaultStations = [
     { id: 'station-radioq37', name: 'Radio Q37', url: 'https://radioq37.com/player/' },
-    { id: 'station-dice', name: 'Dice Radio', url: 'https://diceradio.gr/' }
+    { id: 'station-dice', name: 'Dice Radio', url: 'https://diceradio.gr/' },
+    { id: 'station-difm', name: 'DI.fm Progressive Trance', url: 'https://listen.di.fm/progressive_trance', siteUrl: 'https://www.di.fm/' }
 ];
 
 // Record labels
