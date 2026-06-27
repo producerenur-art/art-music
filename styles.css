@@ -416,3 +416,77 @@ textarea::placeholder {
 .muted {
     opacity: 0.7;
 }
+
+/* Flytende, dragbar + resizebar header-panel */
+.header {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 50;
+    min-width: 220px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    background: rgba(8, 8, 12, 0.86);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    backdrop-filter: blur(18px);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    overflow: visible;
+}
+
+.header:active {
+    cursor: grabbing;
+}
+
+.header img {
+    display: block;
+    pointer-events: none;
+}
+
+.header ul {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.header .logo a,
+.header li > a {
+    color: #f8f9fb;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.header .logo-text {
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.header .header-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.2rem 0.4rem;
+}
+
+/* Resize-handles: usynlige treff-soner langs kanter + hjørner */
+.header-resize { position: absolute; z-index: 5; }
+.header-resize-n { top: -3px; left: 0; right: 0; height: 8px; cursor: n-resize; }
+.header-resize-s { bottom: -3px; left: 0; right: 0; height: 8px; cursor: s-resize; }
+.header-resize-e { top: 0; bottom: 0; right: -3px; width: 8px; cursor: e-resize; }
+.header-resize-w { top: 0; bottom: 0; left: -3px; width: 8px; cursor: w-resize; }
+.header-resize-ne,
+.header-resize-nw,
+.header-resize-se,
+.header-resize-sw { width: 12px; height: 12px; z-index: 6; }
+.header-resize-ne { top: -4px; right: -4px; cursor: ne-resize; }
+.header-resize-nw { top: -4px; left: -4px;  cursor: nw-resize; }
+.header-resize-se { bottom: -4px; right: -4px; cursor: se-resize; }
+.header-resize-sw { bottom: -4px; left: -4px;  cursor: sw-resize; }
