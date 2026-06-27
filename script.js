@@ -648,3 +648,123 @@ function init() {
 }
 
 init();
+
+/* ----------------------------------------------------------------------------
+ * Flytende header: dra rundt + endre størrelse fra alle kanter/hjørner.
+ * Pointer Events (mus + touch), action-state-machine, viewport-clamping,
+ * persistens i localStorage. Selvstendig modul.
+ * ------------------------------------------------------------------------- */
+(function initHeaderDragResize() {
+    const header = document.querySelector('.header');
+    if (!header) return;
+
+    const KEY = 'artMusicHeaderBox';
+    const MIN_W = 220;
+    const MIN_H = 56;
+
+    // Injiser de 8 resize-handlene
+    ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].forEach(dir => {
+        const h = document.createElement('span');
+        h.className = 'header-resize header-resize-' + dir;
+        h.dataset.dir = dir;
+        header.appendChild(h);
+    });
+
+    function applyBox(b) {
+        header.style.position = 'fixed';
+        header.style.right = 'auto';
+        if (b.left != null) header.style.left = b.left + 'px';
+        if (b.top != null) header.style.top = b.top + 'px';
+        if (b.width != null) header.style.width = b.width + 'px';
+        if (b.height != null) header.style.height = b.height + 'px';
+    }
+
+    function saveBox() {
+        const r = header.getBoundingClientRect();
+        try {
+            localStorage.setItem(KEY, JSON.stringify({
+                left: Math.round(r.left),
+                top: Math.round(r.top),
+                width: Math.round(r.width),
+                height: Math.round(r.height)
+            }));
+        } catch (e) { /* ignorer quota-feil */ }
+    }
+
+    // Gjenopprett lagret posisjon/størrelse
+    try {
+        const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+        if (saved) applyBox(saved);
+    } catch (e) { /* ignorer parse-feil */ }
+
+    let action = null;          // 'drag' eller en resize-retning (f.eks. 'se')
+    let sx, sy, sl, st, sw, sh; // start: peker-coords + boks
+    let moved = false;
+
+    header.addEventListener('pointerdown', e => {
+        const handle = e.target.closest('.header-resize');
+        // Dra kun fra ikke-interaktive områder; resize-handles overstyrer
+        if (!handle && e.target.closest('a, button, .streams-list, .channel-list')) return;
+
+        action = handle ? handle.dataset.dir : 'drag';
+        const r = header.getBoundingClientRect();
+        sx = e.clientX; sy = e.clientY;
+        sl = r.left; st = r.top; sw = r.width; sh = r.height;
+        moved = false;
+
+        // Fest til eksplisitte fixed-koordinater før vi flytter/endrer
+        header.style.position = 'fixed';
+        header.style.right = 'auto';
+        header.style.left = sl + 'px';
+        header.style.top = st + 'px';
+        header.style.width = sw + 'px';
+        header.style.height = sh + 'px';
+
+        if (e.target.setPointerCapture) {
+            try { e.target.setPointerCapture(e.pointerId); } catch (err) {}
+        }
+        e.preventDefault();
+    });
+
+    window.addEventListener('pointermove', e => {
+        if (!action) return;
+        const dx = e.clientX - sx;
+        const dy = e.clientY - sy;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+
+        if (action === 'drag') {
+            let nl = sl + dx;
+            let nt = st + dy;
+            nl = Math.max(0, Math.min(nl, window.innerWidth - sw));
+            nt = Math.max(0, Math.min(nt, window.innerHeight - sh));
+            header.style.left = nl + 'px';
+            header.style.top = nt + 'px';
+        } else {
+            let nl = sl, nt = st, nw = sw, nh = sh;
+            if (action.includes('e')) nw = Math.max(MIN_W, sw + dx);
+            if (action.includes('s')) nh = Math.max(MIN_H, sh + dy);
+            if (action.includes('w')) { nw = Math.max(MIN_W, sw - dx); nl = sl + (sw - nw); }
+            if (action.includes('n')) { nh = Math.max(MIN_H, sh - dy); nt = st + (sh - nh); }
+            header.style.left = nl + 'px';
+            header.style.top = nt + 'px';
+            header.style.width = nw + 'px';
+            header.style.height = nh + 'px';
+        }
+    });
+
+    function endAction() {
+        if (!action) return;
+        action = null;
+        saveBox();
+    }
+    window.addEventListener('pointerup', endAction);
+    window.addEventListener('pointercancel', endAction);
+
+    // Et dra på logoen skal ikke trigge reload()
+    const logoLink = header.querySelector('.logo a');
+    if (logoLink) {
+        logoLink.addEventListener('click', e => {
+            if (moved) e.preventDefault();
+        });
+    }
+})();
